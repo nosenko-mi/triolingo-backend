@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import helmet from 'helmet';
+import * as crypto from "node:crypto";
 
 import indexRouter from '@routes/v1/index';
 import authRouter from '@routes/v1/auth';
@@ -15,6 +16,34 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+  if (req.headers.authorization) {
+    let tokenParts = req.headers.authorization
+      .split(' ')[1]
+      .split('.');
+
+    let signature = crypto
+      .createHmac('SHA256', String(process.env.JWT_SECRET))
+      .update(`${tokenParts[0]}.${tokenParts[1]}`)
+      .digest('base64');
+
+    if (signature === tokenParts[2]) {
+      const { tokenCreatedAt, user } = JSON.parse(
+        Buffer.from(
+          tokenParts[1],
+          'base64'
+        ).toString('utf8')
+      );
+
+      (req as any).user = user;
+    }
+
+    next();
+  }
+
+  next();
+});
 
 const v1 = express.Router();
 v1.use('/', indexRouter);
