@@ -4,8 +4,9 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import helmet from 'helmet';
 
-import indexRouter from './routes/index';
-import errorHandler from './middleware/errorHandler';
+import indexRouter from '@routes/v1/index';
+import authRouter from '@routes/v1/auth';
+import errorHandler from '@middlewares/errorHandler';
 
 const app = express();
 
@@ -15,7 +16,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use('/', indexRouter);
+const v1 = express.Router();
+v1.use('/', indexRouter);
+v1.use('/auth', authRouter);
+
+app.use('/v1', v1);
 
 /*
 catch 404 and forward to error handler

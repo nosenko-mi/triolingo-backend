@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/// <reference path="../../@types/global.d.ts" />
 
 require('dotenv').config()
 
@@ -8,7 +9,6 @@ import * as http from 'http';
 import app from '../app';
 
 (async () => {
-  // @ts-ignore
   global.db = await AppDataSource.initialize();
 
   function normalizePort(val: string) {
@@ -31,6 +31,8 @@ import app from '../app';
   const server = http.createServer(app);
 
   function onError(error: Error & { syscall: string; code: string }) {
+    console.error(error); // eslint-disable-line no-console
+
     if (error.syscall !== 'listen') {
       throw error;
     }

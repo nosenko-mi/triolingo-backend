@@ -23,7 +23,8 @@
     "http-errors": "^1.8.0",
     "morgan": "^1.10.0",
     "mysql2": "^3.13.0",
-    "typeorm": "^0.3.21"
+    "typeorm": "^0.3.21",
+    "valibot": "^1.0.0-rc.3"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.8",
@@ -38,6 +39,7 @@
     "eslint-plugin-prettier": "^3.4.0",
     "jest": "^24.9.0",
     "nodemon": "^2.0.12",
-    "supertest": "^3.4.2"
+    "supertest": "^3.4.2",
+    "tsconfig-paths": "^4.2.0"
   }
 }
