@@ -7,6 +7,7 @@ import {runWithManager} from "@utils/database";
 import {Credential, CREDENTIAL_TYPE} from "@entity/Credential";
 import * as crypto from 'crypto';
 import {loginSchema} from "@schemas/auth/login";
+import {authUser} from "@utils/auth";
 
 export const register: RequestHandler = async (req, res) => {
   const parse = v.safeParse(registerSchema, req.body);
@@ -90,32 +91,4 @@ export const login: RequestHandler = async (req, res) => {
 
 export const check: RequestHandler = async (req, res) => {
   res.status(200).json((req as any).user);
-}
-
-const authUser = async (user: User) => {
-  const params = {
-    user,
-    token: {
-      createdAt: new Date(),
-    },
-  };
-
-  let head = Buffer.from(
-    JSON.stringify({ alg: 'HS256', typ: 'jwt' })
-  ).toString('base64');
-  let body = Buffer.from(
-    JSON.stringify(params)
-  ).toString('base64');
-  let signature = crypto
-    .createHmac('SHA256', String(process.env.JWT_SECRET))
-    .update(`${head}.${body}`)
-    .digest('base64');
-
-  return {
-    ...params,
-    token: {
-      ...params.token,
-      value: `${head}.${body}.${signature}`,
-    },
-  };
 }

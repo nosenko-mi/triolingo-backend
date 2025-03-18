@@ -7,6 +7,7 @@ import * as crypto from "node:crypto";
 
 import indexRouter from '@routes/v1/index';
 import authRouter from '@routes/v1/auth';
+import oauthRouter from '@routes/v1/oauth';
 import errorHandler from '@middlewares/errorHandler';
 
 const app = express();
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 const v1 = express.Router();
 v1.use('/', indexRouter);
 v1.use('/auth', authRouter);
+v1.use('/oauth', oauthRouter);
 
 app.use('/v1', v1);
 
