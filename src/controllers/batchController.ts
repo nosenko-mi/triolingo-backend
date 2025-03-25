@@ -139,25 +139,27 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
 
     console.log(json);
 
-    const quizzes: Quiz[] = [];
-    for (const _quiz of json.quizzes) {
-      const quiz = new Quiz();
-      quiz.type = _quiz.type;
-      quiz.message = _quiz.text;
-      quiz.answers = _quiz.answers;
+    await global.db.transaction(async (manager) => {
+      let quizzes: Quiz[] = [];
+      for (const _quiz of json.quizzes) {
+        const quiz = new Quiz();
+        quiz.type = _quiz.type;
+        quiz.message = _quiz.text;
+        quiz.answers = _quiz.answers;
 
-      quizzes.push(quiz);
-    }
+        quizzes.push(quiz);
+      }
 
-    quizzes.every(async (quiz) => await quiz.save())
+      quizzes = await manager.save(quizzes);
 
-    const question = new Question();
-    question.fragment = content;
-    question.source = source;
-    question.message = json.message;
-    question.quizzes = quizzes;
+      const question = new Question();
+      question.fragment = content;
+      question.source = source;
+      question.message = json.message;
+      question.quizzes = quizzes;
 
-    await question.save();
+      await manager.save(question);
+    })
 
     return json;
   } catch (err: unknown) {

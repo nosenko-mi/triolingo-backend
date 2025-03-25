@@ -3,7 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  ManyToOne,
+  ManyToOne, OneToMany,
   PrimaryGeneratedColumn,
   type Relation,
   UpdateDateColumn
@@ -24,7 +24,7 @@ export class Question extends BaseEntity {
   @Column({ type: 'varchar' })
   message?: string;
 
-  @ManyToOne(() => Quiz, (quiz) => quiz.question)
+  @OneToMany(() => Quiz, (quiz) => quiz.question)
   quizzes?: Relation<Quiz[]>;
 
   @CreateDateColumn()
