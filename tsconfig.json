@@ -24,7 +24,8 @@
       "@migrations/*": ["src/migrations/*"],
       "@tests/*": ["src/tests/*"],
       "@test/*": ["src/test/*"],
-      "@entity/*": ["src/entity/*"]
+      "@entity/*": ["src/entity/*"],
+      "@batch/*": ["batches/*"]
     }
   },
   "include": ["src", "@types"],
