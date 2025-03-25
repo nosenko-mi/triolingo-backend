@@ -1,6 +1,8 @@
 import {DataSource} from "typeorm";
 import {User} from "@entity/User";
 import {Credential} from "@entity/Credential";
+import {Question} from "@entity/Question";
+import {Quiz} from "@entity/Quiz";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -11,7 +13,7 @@ export const AppDataSource = new DataSource({
   database: process.env.TYPEORM_DATABASE,
   synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
   logging: process.env.TYPEORM_LOGGING === 'true',
-  entities: [User, Credential],
+  entities: [User, Credential, Question, Quiz],
   subscribers: [],
   migrations: [],
 })

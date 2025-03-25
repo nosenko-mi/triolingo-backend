@@ -3,6 +3,8 @@ import * as v from "valibot";
 import {getBatchSchema} from "@schemas/batch/get";
 import * as fs from 'fs';
 import {GoogleGenerativeAI, ResponseSchema, SchemaType} from "@google/generative-ai";
+import {Question} from "@entity/Question";
+import {Quiz, QUIZ_TYPE} from "@entity/Quiz";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -15,15 +17,53 @@ export const getBatch: RequestHandler = async (req, res) => {
   }
 
   const query = parse.output;
+  const content = getRandomParagraph(`./batches/${query.source}.txt`);
+  if (!content) {
+    res.end(`Error while getting text from source "${query.source}"`);
+
+    return;
+  }
+
+  const response = await getQuiz(content, query.source, query.requireNew !== 'true');
+
+  res.json(response ?? {
+    error: 'Error while getting quiz',
+  }).end();
+};
+
+const getRandomParagraph = (filePath: string): string | null => {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const paragraphs = content.split(/\r?\n\r?\n/).map(p => p.trim()).filter(p => p.length > 0);
+
+    if (paragraphs.length === 0) return null;
+
+    const randomIndex = Math.floor(Math.random() * paragraphs.length);
+
+    return paragraphs[randomIndex];
+  } catch (error) {
+    console.error('File read error:', error);
+
+    return null;
+  }
+}
+
+const getQuiz = async (content: string, source = '', useCache = true) => {
+  console.log('getQuiz', content, source, useCache);
+
+  if (useCache) {
+    const question = await global.db.getRepository(Question)
+      .createQueryBuilder('question')
+      .where('question.fragment = :content', { content })
+      .orderBy('RAND()')
+      .getOne();
+
+    if (question) {
+      return question;
+    }
+  }
 
   try {
-    const content = getRandomParagraph(`./batches/${query.source}.txt`);
-    if (!content) {
-      res.end(`Error while getting text from source "${query.source}"`);
-
-      return;
-    }
-
     const schema: ResponseSchema = {
       description: "Fetch a batch of quiz questions",
       type: SchemaType.OBJECT,
@@ -40,18 +80,18 @@ export const getBatch: RequestHandler = async (req, res) => {
         },
         quizzes: {
           type: SchemaType.ARRAY,
-          description: 'list of quiz questions, null if error',
-          nullable: true,
+          description: 'list of quiz questions, empty if error',
+          nullable: false,
           minItems: 2,
           maxItems: 5,
           items: {
             type: SchemaType.OBJECT,
             properties: {
               type: {
-                description: 'Type of question. single_answer - one correct answer',
+                description: `Type of question. ${QUIZ_TYPE.QUIZ_SINGLE_ANSWER} - one correct answer`,
                 type: SchemaType.STRING,
                 format: 'enum',
-                enum: ['single_answer']
+                enum: [QUIZ_TYPE.QUIZ_SINGLE_ANSWER]
               },
               text: {
                 type: SchemaType.STRING,
@@ -59,11 +99,11 @@ export const getBatch: RequestHandler = async (req, res) => {
               },
               answers: {
                 type: SchemaType.ARRAY,
+                description: 'Answers for question',
                 minItems: 2,
                 maxItems: 4,
                 items: {
                   type: SchemaType.OBJECT,
-                  description: 'Answers for question',
                   properties: {
                     text: {
                       description: 'Answer text',
@@ -74,12 +114,15 @@ export const getBatch: RequestHandler = async (req, res) => {
                       type: SchemaType.BOOLEAN,
                     },
                   },
+                  required: ['text', 'correct'],
                 },
               },
             },
+            required: ['type', 'text', 'answers'],
           },
         },
       },
+      required: ['message', 'quizzes'],
     };
 
     const model = genAI.getGenerativeModel({
@@ -94,30 +137,31 @@ export const getBatch: RequestHandler = async (req, res) => {
 
     const json = JSON.parse(geminiRes.response.text());
 
-    res.json(json).end();
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      res.status(401).end(err.message)
+    console.log(json);
 
-      return;
+    const quizzes: Quiz[] = [];
+    for (const _quiz of json.quizzes) {
+      const quiz = new Quiz();
+      quiz.type = _quiz.type;
+      quiz.message = _quiz.text;
+      quiz.answers = _quiz.answers;
+
+      quizzes.push(quiz);
     }
 
-    res.status(401).end('Unknown error')
-  }
-};
+    quizzes.every(async (quiz) => await quiz.save())
 
-const getRandomParagraph = (filePath: string): string | null => {
-  try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    const paragraphs = content.split(/\r?\n\r?\n/).map(p => p.trim()).filter(p => p.length > 0);
+    const question = new Question();
+    question.fragment = content;
+    question.source = source;
+    question.message = json.message;
+    question.quizzes = quizzes;
 
-    if (paragraphs.length === 0) return null;
+    await question.save();
 
-    const randomIndex = Math.floor(Math.random() * paragraphs.length);
-
-    return paragraphs[randomIndex];
-  } catch (error) {
-    console.error('File read error:', error);
+    return json;
+  } catch (err: unknown) {
+    console.error(err);
 
     return null;
   }

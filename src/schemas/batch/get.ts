@@ -5,4 +5,5 @@ export const getBatchSchema = v.object({
     v.string(),
     v.minLength(1, 'Source is required')
   ),
+  requireNew: v.optional(v.string(), 'false')
 })
