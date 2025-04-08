@@ -54,6 +54,7 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
   if (useCache) {
     const question = await global.db.getRepository(Question)
       .createQueryBuilder('question')
+      .innerJoinAndSelect('question.quizzes', 'quiz')
       .where('question.fragment = :content', { content })
       .orderBy('RAND()')
       .getOne();
@@ -139,7 +140,7 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
 
     console.log(json);
 
-    await global.db.transaction(async (manager) => {
+    return await global.db.transaction(async (manager) => {
       let quizzes: Quiz[] = [];
       for (const _quiz of json.quizzes) {
         const quiz = new Quiz();
@@ -159,9 +160,9 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
       question.quizzes = quizzes;
 
       await manager.save(question);
-    })
 
-    return json;
+      return question
+    })
   } catch (err: unknown) {
     console.error(err);
 
