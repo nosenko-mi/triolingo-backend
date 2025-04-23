@@ -27,6 +27,9 @@ export class Question extends BaseEntity {
   @OneToMany(() => Quiz, (quiz) => quiz.question)
   quizzes?: Relation<Quiz[]>;
 
+  @Column({ type: 'varchar' })
+  description?: string;
+
   @CreateDateColumn()
   createdAt?: Date;
 

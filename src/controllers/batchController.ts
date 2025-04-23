@@ -79,6 +79,11 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
           description: "Question for user",
           nullable: false,
         },
+        description: {
+          type: SchemaType.STRING,
+          description: 'Explain why that answer is the answer. Explain why the others not correct.',
+          nullable: false,
+        },
         quizzes: {
           type: SchemaType.ARRAY,
           description: 'list of quiz questions, empty if error',
@@ -123,7 +128,7 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
           },
         },
       },
-      required: ['message', 'quizzes'],
+      required: ['message', 'quizzes', 'description'],
     };
 
     const model = genAI.getGenerativeModel({
@@ -158,6 +163,7 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
       question.source = source;
       question.message = json.message;
       question.quizzes = quizzes;
+      question.description = json.description;
 
       await manager.save(question);
 
