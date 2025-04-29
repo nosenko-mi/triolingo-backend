@@ -34,6 +34,9 @@ export class Quiz extends BaseEntity {
   @Column({ type: 'varchar' })
   message?: string;
 
+  @Column({ type: 'varchar' })
+  description?: string;
+
   @CreateDateColumn()
   createdAt?: Date;
 
