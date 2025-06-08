@@ -9,7 +9,9 @@ import indexRouter from '@routes/v1/index';
 import authRouter from '@routes/v1/auth';
 import oauthRouter from '@routes/v1/oauth';
 import batchRouter from '@routes/v1/batch';
+import fragmentRouter from '@routes/v1/fragment';
 import errorHandler from '@middlewares/errorHandler';
+import fragment from "@routes/v1/fragment";
 
 const app = express();
 
@@ -52,6 +54,7 @@ v1.use('/', indexRouter);
 v1.use('/auth', authRouter);
 v1.use('/oauth', oauthRouter);
 v1.use('/batch', batchRouter);
+v1.use('/fragment', fragment);
 
 app.use('/v1', v1);
 

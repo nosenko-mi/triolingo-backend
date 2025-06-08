@@ -48,7 +48,7 @@ const getRandomParagraph = (filePath: string): string | null => {
   }
 }
 
-const getQuiz = async (content: string, source = '', useCache = true) => {
+export const getQuiz = async (content: string, source = '', useCache = true) => {
   console.log('getQuiz', content, source, useCache);
 
   if (useCache) {
@@ -56,6 +56,7 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
       .createQueryBuilder('question')
       .innerJoinAndSelect('question.quizzes', 'quiz')
       .where('question.fragment = :content', { content })
+      .andWhere('question.source = :source', { source })
       .orderBy('RAND()')
       .getOne();
 
@@ -139,7 +140,7 @@ const getQuiz = async (content: string, source = '', useCache = true) => {
       },
     });
 
-    const geminiRes = await model.generateContent(`Я вчу англійську мову. Тобі передається фрагмент тексту. Тобі потрібно скласти за ним запитання англійською мовою. Текст: ${content}`);
+    const geminiRes = await model.generateContent(`Я вчу англійську мову. Тобі передається фрагмент тексту. Тобі потрібно скласти за ним запитання англійською мовою. Запитання повинно бути зусередженим на практичному використанні англійської мови. Текст: ${content}`);
 
     const json = JSON.parse(geminiRes.response.text());
 
